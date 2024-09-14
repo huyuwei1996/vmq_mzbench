@@ -363,16 +363,14 @@ load_client_cert(State, _Meta, CertBin) ->
     {PKey, State}.
 
 load_client_key(State, _Meta, KeyBin) ->
-    PemEntries = public_key:pem_decode(KeyBin),
-    case PemEntries of
-        [{'ECPrivateKey', _} = PemEntry] ->
-            {PrivateKey, _} = public_key:pem_entry_decode(PemEntry),
-            {PrivateKey, State};
-        [{'RSAPrivateKey', _} = PemEntry] ->
-            {PrivateKey, _} = public_key:pem_entry_decode(PemEntry),
-            {PrivateKey, State};
+    Decoded = public_key:pem_decode(KeyBin),
+    case Decoded of
+        [{'RSAPrivateKey', KB, _}] ->
+            {{'RSAPrivateKey', KB}, State};
+        [{'ECPrivateKey', KB, _}] ->
+            {{'ECPrivateKey', KB}, State};
         _ ->
-            error({invalid_key_format, PemEntries})
+            {error, unsupported_key_type}
     end.
 
 load_cas(State, _Meta, CABin) ->
