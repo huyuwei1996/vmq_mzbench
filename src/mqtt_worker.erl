@@ -26,7 +26,8 @@
     load_client_cert/3,
     load_client_key/3,
     load_cas/3,
-    get_cert_bin/1]).
+    get_cert_bin/1
+]).
 
 % gen_mqtt stats callback
 -export([stats/2]).
@@ -44,7 +45,8 @@
     on_disconnect/1,
     on_subscribe/2,
     on_unsubscribe/2,
-    on_publish/4]).
+    on_publish/4
+]).
 
 -include_lib("public_key/include/public_key.hrl").
 
@@ -53,67 +55,130 @@
 
 -behaviour(gen_mqtt).
 
-initial_state() ->   % init the MZbench worker
+% init the MZbench worker
+initial_state() ->
     #state{}.
 
-init(State) ->  % init gen_mqtt
+% init gen_mqtt
+init(State) ->
     TS = os:timestamp(),
-  %  random:seed(A,B,C),
-  _ = rand:seed(exsss, TS),
+    %  random:seed(A,B,C),
+    _ = rand:seed(exsss, TS),
     {ok, State}.
 
 metrics() ->
     [
         {group, "MQTT Pub to Sub Latency", [
-            {graph, #{title => "Pub to Sub Latency (QoS 0)", metrics => [{"mqtt.message.pub_to_sub.latency", histogram}]}},
-            {graph, #{title => "Pub to Sub Latency (QoS 1)", metrics => [{"mqtt.message.pub_to_sub.latency.qos1", histogram}]}},
-            {graph, #{title => "Pub to Sub Latency (QoS 2)", metrics => [{"mqtt.message.pub_to_sub.latency.qos2", histogram}]}}
+            {graph, #{
+                title => "Pub to Sub Latency (QoS 0)",
+                metrics => [{"mqtt.message.pub_to_sub.latency", histogram}]
+            }},
+            {graph, #{
+                title => "Pub to Sub Latency (QoS 1)",
+                metrics => [{"mqtt.message.pub_to_sub.latency.qos1", histogram}]
+            }},
+            {graph, #{
+                title => "Pub to Sub Latency (QoS 2)",
+                metrics => [{"mqtt.message.pub_to_sub.latency.qos2", histogram}]
+            }}
         ]},
         {group, "MQTT Publishers QoS 1", [
             % QoS 1 Publisher flow
-            {graph, #{title => "QoS 1: Publish to Puback latency", metrics => [{"mqtt.publisher.qos1.puback.latency", histogram}]}},
-            {graph, #{title => "QoS 1: Pubacks received total", metrics => [{"mqtt.publisher.qos1.puback.in.total", counter}]}},
-            {graph, #{title => "QoS 1: Outstanding Pubacks (Waiting Acks)", metrics => [{"mqtt.publisher.qos1.puback.waiting", counter}]}}
+            {graph, #{
+                title => "QoS 1: Publish to Puback latency",
+                metrics => [{"mqtt.publisher.qos1.puback.latency", histogram}]
+            }},
+            {graph, #{
+                title => "QoS 1: Pubacks received total",
+                metrics => [{"mqtt.publisher.qos1.puback.in.total", counter}]
+            }},
+            {graph, #{
+                title => "QoS 1: Outstanding Pubacks (Waiting Acks)",
+                metrics => [{"mqtt.publisher.qos1.puback.waiting", counter}]
+            }}
         ]},
         {group, "MQTT Publishers QoS 2", [
             % QoS 2 Publisher flow
-            {graph, #{title => "QoS 2: Publish to Pubrec_in latency", metrics => [{"mqtt.publisher.qos2.pub_out_to_pubrec_in.latency", histogram}]}},
-            {graph, #{title => "QoS 2: Pubrecs received total", metrics => [{"mqtt.publisher.qos2.pubrec.in.total", counter}]}},
+            {graph, #{
+                title => "QoS 2: Publish to Pubrec_in latency",
+                metrics => [{"mqtt.publisher.qos2.pub_out_to_pubrec_in.latency", histogram}]
+            }},
+            {graph, #{
+                title => "QoS 2: Pubrecs received total",
+                metrics => [{"mqtt.publisher.qos2.pubrec.in.total", counter}]
+            }},
             {graph, #{
                 title => "QoS 2: Pubrec_in to Pubrel_out internal latency",
-                metrics => [{"mqtt.publisher.qos2.pubrec_in_to_pubrel_out.internal_latency", histogram}]
+                metrics => [
+                    {"mqtt.publisher.qos2.pubrec_in_to_pubrel_out.internal_latency", histogram}
+                ]
             }},
             {graph, #{
                 title => "QoS 2: Pubrel_out to Pubcomp_in latency",
                 metrics => [{"mqtt.publisher.qos2.pubrel_out_to_pubcomp_in.latency", histogram}]
             }},
-            {graph, #{title => "QoS 2: Outstanding Pubrecs (Waiting Acks)", metrics => [{"mqtt.publisher.qos2.pubrec.waiting", counter}]}},
-            {graph, #{title => "QoS 2: Outstanding Pubcomps (Waiting Acks)", metrics => [{"mqtt.publisher.qos2.pubcomp.waiting", counter}]}}
+            {graph, #{
+                title => "QoS 2: Outstanding Pubrecs (Waiting Acks)",
+                metrics => [{"mqtt.publisher.qos2.pubrec.waiting", counter}]
+            }},
+            {graph, #{
+                title => "QoS 2: Outstanding Pubcomps (Waiting Acks)",
+                metrics => [{"mqtt.publisher.qos2.pubcomp.waiting", counter}]
+            }}
         ]},
         {group, "MQTT Connections", [
-            {graph, #{title => "Connack Latency", metrics => [{"mqtt.connection.connack.latency", histogram}]}},
-            {graph, #{title => "Total Connections", metrics => [{"mqtt.connection.current_total", counter}]}},
-            {graph, #{title => "Connection errors", metrics => [{"mqtt.connection.connect.errors", histogram}]}},
+            {graph, #{
+                title => "Connack Latency",
+                metrics => [{"mqtt.connection.connack.latency", histogram}]
+            }},
+            {graph, #{
+                title => "Total Connections",
+                metrics => [{"mqtt.connection.current_total", counter}]
+            }},
+            {graph, #{
+                title => "Connection errors",
+                metrics => [{"mqtt.connection.connect.errors", histogram}]
+            }},
             {graph, #{title => "Reconnects", metrics => [{"mqtt.connection.reconnects", counter}]}}
         ]},
         {group, "MQTT Messages", [
-            {graph, #{title => "Total published messages", metrics => [{"mqtt.message.published.total", counter}]}},
-            {graph, #{title => "Total consumed messages", metrics => [{"mqtt.message.consumed.total", counter}]}}
+            {graph, #{
+                title => "Total published messages",
+                metrics => [{"mqtt.message.published.total", counter}]
+            }},
+            {graph, #{
+                title => "Total consumed messages",
+                metrics => [{"mqtt.message.consumed.total", counter}]
+            }}
         ]},
         {group, "MQTT Consumers", [
-            {graph, #{title => "Suback Latency", metrics => [{"mqtt.consumer.suback.latency", histogram}]}},
-            {graph, #{title => "Unsuback Latency", metrics => [{"mqtt.consumer.unsuback.latency", histogram}]}},
-            {graph, #{title => "Consumer Total", metrics => [{"mqtt.consumer.current_total", counter}]}},
-            {graph, #{title => "Consumer Suback Errors", metrics => [{"mqtt.consumer.suback.errors", counter}]}},
+            {graph, #{
+                title => "Suback Latency", metrics => [{"mqtt.consumer.suback.latency", histogram}]
+            }},
+            {graph, #{
+                title => "Unsuback Latency",
+                metrics => [{"mqtt.consumer.unsuback.latency", histogram}]
+            }},
+            {graph, #{
+                title => "Consumer Total", metrics => [{"mqtt.consumer.current_total", counter}]
+            }},
+            {graph, #{
+                title => "Consumer Suback Errors",
+                metrics => [{"mqtt.consumer.suback.errors", counter}]
+            }},
             % QoS 1 consumer flow
             {graph, #{
                 title => "QoS 1: Publish_in to Puback_out internal latency",
-                metrics => [{"mqtt.consumer.qos1.publish_in_to_puback_out.internal_latency", histogram}]
+                metrics => [
+                    {"mqtt.consumer.qos1.publish_in_to_puback_out.internal_latency", histogram}
+                ]
             }},
             % QoS 2 consumer flow
             {graph, #{
                 title => "QoS 2: Publish_in to Pubrec_out internal latency",
-                metrics => [{"mqtt.consumer.qos2.publish_in_to_pubrec_out.internal_latency", histogram}]
+                metrics => [
+                    {"mqtt.consumer.qos2.publish_in_to_pubrec_out.internal_latency", histogram}
+                ]
             }},
             {graph, #{
                 title => "QoS 2: Pubrec_out to Pubrel_in latency",
@@ -121,7 +186,9 @@ metrics() ->
             }},
             {graph, #{
                 title => "QoS 2: Pubrel_in to Pubcomp_out internal latency",
-                metrics => [{"mqtt.consumer.qos2.pubrel_in_to_pubcomp_out.internal_latency", histogram}]
+                metrics => [
+                    {"mqtt.consumer.qos2.pubrel_in_to_pubcomp_out.internal_latency", histogram}
+                ]
             }}
         ]}
     ].
@@ -145,8 +212,8 @@ on_subscribe(Topics, State) ->
     case Topics of
         {error, _T, _QoSTable} ->
             mzb_metrics:notify({"mqtt.consumer.suback.errors", counter}, 1);
-    _ ->
-    mzb_metrics:notify({"mqtt.consumer.current_total", counter}, 1)
+        _ ->
+            mzb_metrics:notify({"mqtt.consumer.current_total", counter}, 1)
     end,
     {ok, State}.
 
@@ -154,7 +221,7 @@ on_unsubscribe(_Topics, State) ->
     mzb_metrics:notify({"mqtt.consumer.current_total", counter}, -1),
     {ok, State}.
 
-on_publish(Topic, Payload, _Opts, #mqtt{action=Action} = State) ->
+on_publish(Topic, Payload, _Opts, #mqtt{action = Action} = State) ->
     mzb_metrics:notify({"mqtt.message.consumed.total", counter}, 1),
     case Action of
         {forward, TopicPrefix, Qos} ->
@@ -178,7 +245,7 @@ handle_call(_Req, _From, State) ->
     {reply, ok, State}.
 
 handle_cast(Req, State) ->
-    {noreply, State#mqtt{action=Req}}.
+    {noreply, State#mqtt{action = Req}}.
 
 handle_info(_Req, State) ->
     {noreply, State}.
@@ -190,18 +257,19 @@ terminate(_Reason, _State) ->
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
-
 %% ------------------------------------------------
 %% MZBench API (Statement Functions)
 %% ------------------------------------------------
 
 connect(State, _Meta, ConnectOpts) ->
     ClientId = proplists:get_value(client, ConnectOpts),
-    Args = #mqtt{action={idle}},
-    {ok, SessionPid} = gen_mqtt:start_link(?MODULE, Args, [{info_fun, {fun stats/2, maps:new()}}|ConnectOpts]),
-    {nil, State#state{mqtt_fsm=SessionPid, client=ClientId}}.
+    Args = #mqtt{action = {idle}},
+    {ok, SessionPid} = gen_mqtt:start_link(?MODULE, Args, [
+        {info_fun, {fun stats/2, maps:new()}} | ConnectOpts
+    ]),
+    {nil, State#state{mqtt_fsm = SessionPid, client = ClientId}}.
 
-disconnect(#state{mqtt_fsm=SessionPid} = State, _Meta) ->
+disconnect(#state{mqtt_fsm = SessionPid} = State, _Meta) ->
     gen_mqtt:disconnect(SessionPid),
     {nil, State}.
 
@@ -220,15 +288,16 @@ publish(#state{mqtt_fsm = SessionPid} = State, _Meta, Topic, Payload, QoS, Retai
             {nil, State}
     end.
 
-
-subscribe(#state{mqtt_fsm = SessionPid} = State, _Meta, [T|_] = Topics) when is_tuple(T) ->
+subscribe(#state{mqtt_fsm = SessionPid} = State, _Meta, [T | _] = Topics) when is_tuple(T) ->
     ValidTopics = lists:filtermap(
         fun({Topic, Qos}) ->
             case vmq_topic:validate_topic(subscribe, list_to_binary(Topic)) of
                 {ok, ValidTopic} ->
                     {true, {ValidTopic, Qos}};
                 {error, Reason} ->
-                    error_logger:warning_msg("Can't validate topic conf ~p due to ~p~n", [Topic, Reason]),
+                    error_logger:warning_msg("Can't validate topic conf ~p due to ~p~n", [
+                        Topic, Reason
+                    ]),
                     false
             end
         end,
@@ -264,7 +333,7 @@ forward(#state{mqtt_fsm = SessionPid} = State, _Meta, TopicPrefix, Qos) ->
     gen_fsm:send_all_state_event(SessionPid, {forward, TopicPrefix, Qos}),
     {nil, State}.
 
-client(#state{client = Client}=State, _Meta) ->
+client(#state{client = Client} = State, _Meta) ->
     {Client, State}.
 
 worker_id(State, Meta) ->
@@ -294,8 +363,17 @@ load_client_cert(State, _Meta, CertBin) ->
     {PKey, State}.
 
 load_client_key(State, _Meta, KeyBin) ->
-    [{'RSAPrivateKey', KB, _}] = public_key:pem_decode(KeyBin),
-    {{'RSAPrivateKey', KB}, State}.
+    PemEntries = public_key:pem_decode(KeyBin),
+    case PemEntries of
+        [{'EC PRIVATE KEY', _} = PemEntry] ->
+            {PrivateKey, _} = public_key:pem_entry_decode(PemEntry),
+            {PrivateKey, State};
+        [{'PRIVATE KEY', _} = PemEntry] ->
+            {PrivateKey, _} = public_key:pem_entry_decode(PemEntry),
+            {PrivateKey, State};
+        _ ->
+            error({invalid_key_format, PemEntries})
+    end.
 
 load_cas(State, _Meta, CABin) ->
     CAList = public_key:pem_decode(CABin),
@@ -310,7 +388,8 @@ get_cert_bin(Cert) ->
 %% Gen_MQTT Info Callbacks
 %% ------------------------------------------------
 
-stats({connect_out, ClientId}, State) -> % log connection attempt
+% log connection attempt
+stats({connect_out, ClientId}, State) ->
     io:format("connect_out for client_id: ~p~n", [ClientId]),
     T1 = os:timestamp(),
     maps:put(ClientId, T1, State);
@@ -319,7 +398,7 @@ stats({connack_in, ClientId}, State) ->
 stats({reconnect, _ClientId}, State) ->
     mzb_metrics:notify({"mqtt.connection.reconnects", counter}, 1),
     State;
-stats({publish_out, MsgId, QoS}, State)  ->
+stats({publish_out, MsgId, QoS}, State) ->
     case QoS of
         0 -> ok;
         1 -> mzb_metrics:notify({"mqtt.publisher.qos1.puback.waiting", counter}, 1);
@@ -339,13 +418,20 @@ stats({publish_in, MsgId, Payload, QoS}, State) ->
 stats({puback_in, MsgId}, State) ->
     T1 = maps:get({outgoing, MsgId}, State),
     T2 = os:timestamp(),
-    mzb_metrics:notify({"mqtt.publisher.qos1.puback.latency", histogram}, positive(timer:now_diff(T2, T1))),
+    mzb_metrics:notify(
+        {"mqtt.publisher.qos1.puback.latency", histogram}, positive(timer:now_diff(T2, T1))
+    ),
     mzb_metrics:notify({"mqtt.publisher.qos1.puback.in.total", counter}, 1),
     mzb_metrics:notify({"mqtt.publisher.qos1.puback.waiting", counter}, -1),
     NewState = maps:remove({outgoing, MsgId}, State),
     NewState;
 stats({puback_out, MsgId}, State) ->
-    diff({incoming, MsgId}, State, "mqtt.consumer.qos1.publish_in_to_puback_out.internal_latency", histogram);
+    diff(
+        {incoming, MsgId},
+        State,
+        "mqtt.consumer.qos1.publish_in_to_puback_out.internal_latency",
+        histogram
+    );
 stats({suback, MsgId}, State) ->
     diff(MsgId, State, "mqtt.consumer.suback.latency", histogram);
 stats({subscribe_out, MsgId}, State) ->
@@ -359,7 +445,10 @@ stats({unsuback, MsgId}, State) ->
 stats({pubrec_in, MsgId}, State) ->
     T2 = os:timestamp(),
     T1 = maps:get({outgoing, MsgId}, State),
-    mzb_metrics:notify({"mqtt.publisher.qos2.pub_out_to_pubrec_in.latency", histogram}, positive(timer:now_diff(T2, T1))),
+    mzb_metrics:notify(
+        {"mqtt.publisher.qos2.pub_out_to_pubrec_in.latency", histogram},
+        positive(timer:now_diff(T2, T1))
+    ),
     mzb_metrics:notify({"mqtt.publisher.qos2.pubrec.in.total", counter}, 1),
     mzb_metrics:notify({"mqtt.publisher.qos2.pubrec.waiting", counter}, -1),
     NewState = maps:update({outgoing, MsgId}, T2, State),
@@ -367,33 +456,48 @@ stats({pubrec_in, MsgId}, State) ->
 stats({pubrec_out, MsgId}, State) ->
     T2 = maps:get({incoming, MsgId}, State),
     T3 = os:timestamp(),
-    mzb_metrics:notify({"mqtt.consumer.qos2.publish_in_to_pubrec_out.internal_latency", histogram}, positive(timer:now_diff(T3, T2))),
+    mzb_metrics:notify(
+        {"mqtt.consumer.qos2.publish_in_to_pubrec_out.internal_latency", histogram},
+        positive(timer:now_diff(T3, T2))
+    ),
     NewState = maps:update({incoming, MsgId}, T3, State),
     NewState;
 stats({pubrel_out, MsgId}, State) ->
     T3 = os:timestamp(),
     T2 = maps:get({outgoing, MsgId}, State),
-    mzb_metrics:notify({"mqtt.publisher.qos2.pubrec_in_to_pubrel_out.internal_latency", histogram}, positive(timer:now_diff(T3, T2))),
+    mzb_metrics:notify(
+        {"mqtt.publisher.qos2.pubrec_in_to_pubrel_out.internal_latency", histogram},
+        positive(timer:now_diff(T3, T2))
+    ),
     mzb_metrics:notify({"mqtt.publisher.qos2.pubcomp.waiting", counter}, 1),
     NewState = maps:update({outgoing, MsgId}, T3, State),
     NewState;
 stats({pubrel_in, MsgId}, State) ->
     T4 = os:timestamp(),
     T3 = maps:get({incoming, MsgId}, State),
-    mzb_metrics:notify({"mqtt.consumer.qos2.pubrec_out_to_pubrel_in.latency", histogram}, positive(timer:now_diff(T4, T3))),
+    mzb_metrics:notify(
+        {"mqtt.consumer.qos2.pubrec_out_to_pubrel_in.latency", histogram},
+        positive(timer:now_diff(T4, T3))
+    ),
     NewState = maps:update({incoming, MsgId}, T4, State),
     NewState;
 stats({pubcomp_in, MsgId}, State) ->
     T4 = os:timestamp(),
     T3 = maps:get({outgoing, MsgId}, State),
-    mzb_metrics:notify({"mqtt.publisher.qos2.pubrel_out_to_pubcomp_in.latency", histogram}, positive(timer:now_diff(T4, T3))),
+    mzb_metrics:notify(
+        {"mqtt.publisher.qos2.pubrel_out_to_pubcomp_in.latency", histogram},
+        positive(timer:now_diff(T4, T3))
+    ),
     mzb_metrics:notify({"mqtt.publisher.qos2.pubcomp.waiting", counter}, -1),
     NewState = maps:remove({outgoing, MsgId}, State),
     NewState;
 stats({pubcomp_out, MsgId}, State) ->
     T5 = os:timestamp(),
     T4 = maps:get({incoming, MsgId}, State),
-    mzb_metrics:notify({"mqtt.consumer.qos2.pubrel_in_to_pubcomp_out.internal_latency", histogram}, positive(timer:now_diff(T5, T4))),
+    mzb_metrics:notify(
+        {"mqtt.consumer.qos2.pubrel_in_to_pubcomp_out.internal_latency", histogram},
+        positive(timer:now_diff(T5, T4))
+    ),
     NewState = maps:remove({incoming, MsgId}, State),
     NewState.
 
