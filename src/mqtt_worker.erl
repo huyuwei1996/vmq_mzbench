@@ -365,10 +365,10 @@ load_client_cert(State, _Meta, CertBin) ->
 load_client_key(State, _Meta, KeyBin) ->
     PemEntries = public_key:pem_decode(KeyBin),
     case PemEntries of
-        [{'EC PRIVATE KEY', _} = PemEntry] ->
+        [{'ECPrivateKey', _} = PemEntry] ->
             {PrivateKey, _} = public_key:pem_entry_decode(PemEntry),
             {PrivateKey, State};
-        [{'PRIVATE KEY', _} = PemEntry] ->
+        [{'RSAPrivateKey', _} = PemEntry] ->
             {PrivateKey, _} = public_key:pem_entry_decode(PemEntry),
             {PrivateKey, State};
         _ ->
